@@ -1,5 +1,5 @@
 ## RUCFS
-RUCFS `/räk/` is a _Read-only Un-Compressed File System_.  
+RUCFS `/ˈrɑːkˈɛfˈɛs/` is a _Read-only Un-Compressed File System_.  
 It provides a simple and compact structure to store data up to 4GB.
 
 It supports regular files, nested directories, and symbolic links.  
