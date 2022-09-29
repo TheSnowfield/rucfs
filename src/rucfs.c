@@ -167,17 +167,17 @@ rucfs_errcode_t rucfs_fopen(rucfs_ctx_t* ctx, const char* file, rucfs_file_t** f
   return rucfs_err_ok;
 }
 
-rucfs_errcode_t rucfs_fclose(rucfs_ctx_t *ctx, rucfs_file_t *pf) {
+rucfs_errcode_t rucfs_fclose(rucfs_ctx_t *ctx, rucfs_file_t *fp) {
   
   // checks
-  if(ctx == NULL || pf == NULL)
+  if(ctx == NULL || fp == NULL)
     return rucfs_err_arguments;
 
   // do clear
-  pf->name = NULL;
-  pf->data = NULL;
-  pf->length = 0;
-  free(pf);
+  fp->name = NULL;
+  fp->data = NULL;
+  fp->length = 0;
+  free(fp);
 
   return rucfs_err_ok;
 }
