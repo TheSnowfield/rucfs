@@ -17,7 +17,7 @@ def main():
   
   # Check for correct number of arguments
   if len(sys.argv) != 3:
-    print("Usage: mkrucfs.py <pathtofile> <output>")
+    print("Usage: mkfs.rucfs.py <directory> <output>")
     sys.exit(1)
 
   # create output file
