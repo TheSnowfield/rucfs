@@ -84,7 +84,7 @@ typedef struct {
   uint32_t length;
 } rucfs_file_t;
 
-#define rucfs_chk(e) ((e) == rucfs_err_ok)
+#define rucfs_ok(e) ((e) == rucfs_err_ok)
 
 /**
  * @brief load a rucfs binary

@@ -105,10 +105,8 @@ rucfs_errcode_t rucfs_path_to(rucfs_ctx_t* ctx, const char* file, rucfs_inode_t*
     // not deeply enough....
     next_inode:
 
-    // breadth search
+    // breadth-fitst search
     if(current_items > 0) {
-      --current_items;
-
       static size_t typelen[] = {
         0,
         sizeof(rucfs_inode_directory_t),
@@ -116,7 +114,9 @@ rucfs_errcode_t rucfs_path_to(rucfs_ctx_t* ctx, const char* file, rucfs_inode_t*
         sizeof(rucfs_inode_symlink_t)
       };
 
+      // move to next inode
       current = (rucfs_inode_t *)(((uint8_t *)current) + typelen[current->type]);
+      --current_items;
     }
 
     // no directory to step in
@@ -142,7 +142,7 @@ rucfs_errcode_t rucfs_fopen(rucfs_ctx_t* ctx, const char* file, rucfs_file_t** f
 
   // try to path to the file
   rucfs_inode_file_t *inode; {
-    if(!rucfs_chk(rucfs_path_to(ctx, file, (rucfs_inode_t **)&inode)))
+    if(!rucfs_ok(rucfs_path_to(ctx, file, (rucfs_inode_t **)&inode)))
       return rucfs_err_notfound;
 
     // current inode is not a file
@@ -192,7 +192,7 @@ bool rucfs_exist(rucfs_ctx_t* ctx, const char *file, rucfs_errcode_t *err) {
 
   // try to path to the file
   rucfs_inode_file_t *inode; {
-    if(!rucfs_chk(rucfs_path_to(ctx, file, (rucfs_inode_t **)&inode)))
+    if(!rucfs_ok(rucfs_path_to(ctx, file, (rucfs_inode_t **)&inode)))
       return false;
   }
 
