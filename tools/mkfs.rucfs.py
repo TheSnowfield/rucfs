@@ -4,10 +4,10 @@ import os
 import sys
 from lib.rucfs_writer import rucfs_writer
 
-inode_offset = 0
 names = ""
-name_offset = 0
 files = []
+inode_offset = 0
+name_offset = 0
 data_offset = 0
 inode_table = 0x20
 data_table = 0x20
