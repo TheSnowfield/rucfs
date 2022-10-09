@@ -5,6 +5,7 @@
 
 #define RUCFS_DEFAULT 0xFFFFFFFF
 #define rucfs_open_symlink(ctx, inode) ((rucfs_inode_t *)(ctx->itab + ((rucfs_inode_symlink_t *)inode)->ref_inode_offset))
+#define rucfs_open_directory(ctx, inode) ((rucfs_inode_t *)(ctx->itab + ((rucfs_inode_directory_t *)inode)->ref_inode_offset))
 #define rucfs_inode_name(ctx, inode) ((char* )ctx->strtab + (inode)->name_offset)
 
 rucfs_errcode_t rucfs_load(uint8_t* data, rucfs_ctx_t* ctx) {
@@ -70,14 +71,23 @@ rucfs_errcode_t rucfs_path_to(rucfs_ctx_t* ctx, const char* file, rucfs_inode_t*
     if(strncmp(stepname, current_name, length) == 0) {
       
       // stepname contains current_name and more
-      if(*(stepname + length) != '/' && *(stepname + length) != '\0') {
+      char splitchar = *(stepname + length);
+      if(splitchar != '/' && splitchar != '\0') {
         stepname += length;
         goto next_inode;
       }
 
+      // step into sub-directory
+      else if(splitchar == '/') {
+        stepname += length + 1;
+        current_items = ((rucfs_inode_directory_t *)current)->item_count;
+        current = rucfs_open_directory(ctx, current);
+        continue;
+      }
+
       // okay we have stepped to the end of the path
-      else if(stepend - stepname + 1 == filename_len) {
-        
+      else if(stepname + length == stepend) {
+
         // oops it's a directory
         if(current->type == rucfs_inode_directory)
           return rucfs_err_notfound;
@@ -99,7 +109,8 @@ rucfs_errcode_t rucfs_path_to(rucfs_ctx_t* ctx, const char* file, rucfs_inode_t*
       }
 
       // no such file or directory
-      else return rucfs_err_notfound;
+      else if(current_items <= 0)
+        return rucfs_err_notfound;
     }
 
     // not deeply enough....
@@ -107,6 +118,7 @@ rucfs_errcode_t rucfs_path_to(rucfs_ctx_t* ctx, const char* file, rucfs_inode_t*
 
     // breadth-fitst search
     if(current_items > 0) {
+
       static size_t typelen[] = {
         0,
         sizeof(rucfs_inode_directory_t),
