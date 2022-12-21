@@ -1,3 +1,7 @@
+.vscode/
+
 # python cache
 tools/lib/__pycache__/
+
+# build cache
 build/
