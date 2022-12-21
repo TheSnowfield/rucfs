@@ -18,35 +18,32 @@ typedef enum {
   rucfs_err_out_of_memory = -5,
 } rucfs_errcode_t;
 
-typedef enum {
-  rucfs_inode_directory        = 1,
-  rucfs_inode_file             = 2,
-  rucfs_inode_symlink          = 3,
-} rucfs_inode_type_t;
+typedef uint8_t rucfs_inode_type_t;
+#define rucfs_inode_directory (1)
+#define rucfs_inode_file      (2)
+#define rucfs_inode_symlink   (3)
 
-typedef enum {
-  rucfs_flag_endian_be = 0x00000001,
-  rucfs_flag_max       = 0xFFFFFFFF
-} rucfs_flags_t;
+typedef uint32_t rucfs_flags_t;
+#define rucfs_flag_endian_be  (0x00000001)
+
+typedef struct {
+  char magic[6];
+  uint8_t version_major;
+  uint8_t version_minor;
+  uint32_t modded_time;
+  rucfs_flags_t flags;
+  uint32_t inode_table;
+  uint32_t data_table;
+  uint32_t string_table;
+  uint32_t reserved;
+} rucfs_superblock_t;
 
 #ifdef _MSC_VER
 #pragma pack(push, 1)
 #endif
 
 typedef struct {
-  char magic[6];
-  uint32_t modded_time;
-  uint8_t version_major;
-  uint8_t version_minor;
-  rucfs_flags_t flags;
-  uint32_t inode_table;
-  uint32_t data_table;
-  uint32_t string_table;
-  uint32_t reserved;
-} __attribute__((packed)) rucfs_superblock_t;
-
-typedef struct {
-  rucfs_inode_type_t type : 8;
+  rucfs_inode_type_t type;
   uint32_t name_offset;
 } __attribute__((packed)) rucfs_inode_t;
 

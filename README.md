@@ -41,7 +41,7 @@ uint32_t length = file->length;
 printf("[ OK ] File loaded. Length %d", length);
 
 // close the file
-rucfs_fclose(file);
+rucfs_fclose(&ctx, file);
 ```
 
 ## TODOs

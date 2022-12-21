@@ -18,9 +18,9 @@ class rucfs_writer:
 
   def __write_header(self) -> None:
     self.write_str("rucfs\x00")     # magic
-    self.write_uint(int(time.time()), 4) # modded_time
     self.write_uint(0x01, 1)        # version_major
     self.write_uint(0x00, 1)        # version_minor
+    self.write_uint(int(time.time()), 4) # modded_time
     self.write_uint(0x00000000, 4)  # flag
     self.write_uint(0x00000020, 4)  # inode_table fixed at 0x20
     self.write_uint(0x00000000, 4)  # placeholder of data_table
