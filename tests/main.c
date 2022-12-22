@@ -68,7 +68,7 @@ int main() {
 
   uint8_t* image;
   size_t   length;
-  if(!load_image("/mnt/m/Projects/rucfs/tests/build/rucfs.img", &image, &length)) {
+  if(!load_image("rucfs.img", &image, &length)) {
     printf("[****] Filed to open the file.\n");
     return 1;
   }
