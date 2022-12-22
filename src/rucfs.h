@@ -81,6 +81,11 @@ typedef struct {
   uint32_t length;
 } rucfs_file_t;
 
+typedef struct {
+  rucfs_inode_type_t type;
+  char* name;
+} rucfs_path_enum_t;
+
 #define rucfs_ok(e) ((e) == rucfs_err_ok)
 
 /**
@@ -105,11 +110,10 @@ rucfs_errcode_t rucfs_fopen(rucfs_ctx_t* ctx, const char* file, rucfs_file_t** f
 /**
  * @brief close the file
  *
- * @param ctx rcufs context handle
  * @param fp file context
  * @return if success return rucfs_err_ok
  */
-rucfs_errcode_t rucfs_fclose(rucfs_ctx_t* ctx, rucfs_file_t* fp);
+rucfs_errcode_t rucfs_fclose(rucfs_file_t* fp);
 
 /**
  * @brief file exists
@@ -120,5 +124,16 @@ rucfs_errcode_t rucfs_fclose(rucfs_ctx_t* ctx, rucfs_file_t* fp);
  * @return if file/directory/symlink exist return true, otherwise return false
  */
 bool rucfs_exist(rucfs_ctx_t* ctx, const char* file, rucfs_errcode_t* err);
+
+/**
+ * @brief enumerate the structure of path
+ *
+ * @param ctx rcufs context handle
+ * @param path path to enumerate
+ * @param list the directory structure, pass NULL to get the item amount of a path
+ * @param size item amount
+ * @param err rucfs_errcode_t
+*/
+rucfs_errcode_t rucfs_enumerate_path(rucfs_ctx_t* ctx, const char* path, rucfs_path_enum_t* list, size_t* size);
 
 #endif /* _RUCFS_H */
