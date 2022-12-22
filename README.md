@@ -41,13 +41,13 @@ uint32_t length = file->length;
 printf("[ OK ] File loaded. Length %d", length);
 
 // close the file
-rucfs_fclose(&ctx, file);
+rucfs_fclose(file);
 ```
 
 ## TODOs
 - [ ] Big Endian
 - [ ] Read/Write HAL
-- [ ] Benchmark and Tests
+- [x] Benchmark and Tests
 - [x] mkfs.rucfs
 - [x] Readme diagram
 
