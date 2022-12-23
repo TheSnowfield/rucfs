@@ -49,19 +49,45 @@ void test_openfile(rucfs_ctx_t* ctx) {
   printf("[ OK ] File closed.\n");
 }
 
-void test_retrieve_path(rucfs_ctx_t* ctx) {
+void test_retrieve_path(rucfs_ctx_t* ctx, const char* path, size_t deep) {
   size_t size;
-  rucfs_enumerate_path(ctx, "/", NULL, &size);
-  printf("[ OK ] Retrieve the files of the path. \"/\" contains %d item(s).\n", size);
 
+  // count files
+  rucfs_enumerate_path(ctx, path, NULL, &size);
+
+  // retrieve directory structure
   rucfs_path_enum_t* list = malloc(sizeof(rucfs_path_enum_t) * size); {
-    rucfs_enumerate_path(ctx, "/", list, &size);
+    rucfs_enumerate_path(ctx, path, list, &size);
+    
     for (size_t i = 0; i < size; ++i) {
-      printf("  - %s%s\n", list[i].name, list[i].type == rucfs_inode_directory ? "/" : "");
+      
+      // print table
+      for(size_t j = deep; j > 0; --j) printf("    ");
+      
+      // print root items
+      if(deep == 0) printf("- ");
+
+      // print item name
+      printf("%s%s\n", list[i].name,
+        list[i].type == rucfs_inode_directory ? "/" : "");
+
+      // jump into the directory :3
+      if(list[i].type == rucfs_inode_directory) {
+        char pathbuf[256];
+        snprintf(pathbuf, sizeof(pathbuf), "%s%s%s", path, deep > 0 ? "/" : "", list[i].name);
+        test_retrieve_path(ctx, pathbuf, deep + 1);
+      }
     }
   }
 
   free(list);
+}
+
+void test_path_normalization() {
+  char* str = "//fff//dd////d39.bb/";
+  char buf[64];
+  rucfs_normalize_path(buf, str, false);
+  printf("[    ] %s -> %s\n", str, buf);
 }
 
 int main() {
@@ -86,7 +112,8 @@ int main() {
 
   // run tests
   test_openfile(&ctx);
-  test_retrieve_path(&ctx);
+  test_retrieve_path(&ctx, "/", 0);
+  test_path_normalization();
 
   free(image);
 }
