@@ -284,11 +284,12 @@ rucfs_errcode_t rucfs_enumerate_path(rucfs_ctx_t* ctx, const char* path, rucfs_p
       list->name = rucfs_inode_name(ctx, inode);
       list->type = inode->type;
 
-      inode = (rucfs_inode_t *)(((uint8_t *)inode) + _typelen[inode->type]);
-
       // move to next inode
+      inode = (rucfs_inode_t *)(((uint8_t *)inode) + _typelen[inode->type]);
       ++list;
     }
     return rucfs_err_ok;
   }
+
+  else return rucfs_err_arguments;
 }

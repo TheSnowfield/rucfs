@@ -57,3 +57,4 @@ Licensed under MIT with ❤.
 ## Thanks
 - [@takayama-lily](https://github.com/takayama-lily)
 - [@LXY1226](https://github.com/LXY1226)
+- [@Angelic47](https://github.com/Angelic47)
