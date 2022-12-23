@@ -3,19 +3,6 @@
 
 #include "rucfs.h"
 
-#define RUCFS_DEFAULT 0xFFFFFFFF
-#define rucfs_open_symlink(ctx, inode) \
-  ((rucfs_inode_t *)(ctx->itab +       \
-  ((rucfs_inode_symlink_t *)inode)->ref_inode_offset))
-
-#define rucfs_open_directory(ctx, inode) \
-  ((rucfs_inode_t *)(ctx->itab +         \
-  ((rucfs_inode_directory_t *)inode)->ref_inode_offset))
-
-#define rucfs_inode_name(ctx, inode) \
-  ((char* )ctx->strtab +             \
-  (inode)->name_offset)
-
 static size_t _typelen[] = {
   0,
   sizeof(rucfs_inode_directory_t),
@@ -95,39 +82,40 @@ rucfs_errcode_t rucfs_path_to(rucfs_ctx_t* ctx, const char* file, rucfs_inode_t*
       // step into sub-directory
       else if(splitchar == '/') {
         stepname += length + 1;
-        current_items = ((rucfs_inode_directory_t *)current)->item_count;
-        current = rucfs_open_directory(ctx, current);
+
+        // if a directory
+        if(current->type == rucfs_inode_directory) {
+          current_items = ((rucfs_inode_directory_t *)current)->item_count;
+          current = rucfs_open_directory(ctx, current);
+        }
+
+        // if a symol link
+        else if(current->type == rucfs_inode_symlink) {
+          current = rucfs_open_symlink(ctx, current); {
+            if(current->type != rucfs_inode_directory)
+              return rucfs_err_notfound;
+          }
+          current_items = ((rucfs_inode_directory_t *)current)->item_count;
+        }
+        
+        // the regular file :P
+        else if (current->type == rucfs_inode_file)
+          return rucfs_err_notfound;
+
         continue;
       }
 
       // okay we have stepped to the end of the path
       else if(stepname + length == stepend) {
-
-        // oops it's a directory
-        if(current->type == rucfs_inode_directory)
-          break;
-          // return rucfs_err_notfound;
-
-        // the regular file :P
-        else if (current->type == rucfs_inode_file)
-          break;
-
-        // it seems to be like a symbol link
-        else if (current->type == rucfs_inode_symlink) {
-
-          // oh no it's not a file
-          if(rucfs_open_symlink(ctx, current)->type != rucfs_inode_file)
-            return rucfs_err_notfound;
-          
-          // okey found it
-          break;
-        }
+        break;
       }
 
       // no such file or directory
       else if(current_items <= 0)
         return rucfs_err_notfound;
     }
+
+    else if(*stepname == '\0') break;
 
     // not deep enough....
     next_inode:
@@ -220,6 +208,38 @@ bool rucfs_exist(rucfs_ctx_t* ctx, const char *file, rucfs_errcode_t *err) {
   return true;
 }
 
+size_t rucfs_normalize_path(char* dst, const char* src, bool endslash) {
+  
+  size_t i = 0, j = -1;
+
+  for (; *src != '\0'; ++src, ++i) {
+
+    // copy normal characters
+    if(*src != '/') {
+      dst[++j] = *src;
+    }
+    
+    // copy and keep '/' single
+    else if(*src == '/' && dst[j] != '/') {
+      dst[++j] = '/';
+    }
+  }
+
+  // sealed the string
+  if(endslash && !(i == 1 && dst[j] == '/')) {
+    dst[++j]   = '/';
+    dst[++j] = '\0';
+  }
+  
+  else if (!endslash) {
+    dst[j] = '\0';
+  }
+
+  else dst[++j] = '\0';
+
+  return j;
+}
+
 rucfs_errcode_t rucfs_enumerate_path(rucfs_ctx_t* ctx, const char* path, rucfs_path_enum_t* list, size_t* size) {
 
   // some checks
@@ -242,25 +262,33 @@ rucfs_errcode_t rucfs_enumerate_path(rucfs_ctx_t* ctx, const char* path, rucfs_p
     return rucfs_err_notfound;
   }
 
-  size_t current_items = ((rucfs_inode_directory_t *)inode)->item_count;
+  size_t inode_items = ((rucfs_inode_directory_t *)inode)->item_count;
   
   // count the files of a path
   if(list == NULL && size != NULL) {
-    *size = current_items;
-    return true;
+    *size = inode_items;
+    return rucfs_err_ok;
   }
 
   // retrieve the directory structure of a path
   else if (list != NULL && size != NULL) {
-    for(size_t i = 0; i < current_items; ++i) {
-      inode = (rucfs_inode_t *)(((uint8_t *)inode) + _typelen[inode->type]);
+
+    // exceeds the max items that this directory contains
+    if(*size > inode_items)
+      return rucfs_err_arguments;
+
+    inode = rucfs_open_directory(ctx, inode);
+    for(size_t i = 0; i < *size; ++i) {
 
       // fill the list
       list->name = rucfs_inode_name(ctx, inode);
       list->type = inode->type;
 
+      inode = (rucfs_inode_t *)(((uint8_t *)inode) + _typelen[inode->type]);
+
       // move to next inode
       ++list;
     }
+    return rucfs_err_ok;
   }
 }

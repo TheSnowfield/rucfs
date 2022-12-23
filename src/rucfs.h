@@ -87,6 +87,19 @@ typedef struct {
 } rucfs_path_enum_t;
 
 #define rucfs_ok(e) ((e) == rucfs_err_ok)
+#define RUCFS_DEFAULT 0xFFFFFFFF
+
+#define rucfs_open_symlink(ctx, inode)   \
+  ((rucfs_inode_t *)(ctx->itab +         \
+  ((rucfs_inode_symlink_t *)inode)->ref_inode_offset))
+
+#define rucfs_open_directory(ctx, inode) \
+  ((rucfs_inode_t *)(ctx->itab +         \
+  ((rucfs_inode_directory_t *)inode)->ref_inode_offset))
+
+#define rucfs_inode_name(ctx, inode)     \
+  ((char* )ctx->strtab +                 \
+  (inode)->name_offset)
 
 /**
  * @brief load a rucfs binary
@@ -96,6 +109,16 @@ typedef struct {
  * @return if success return rucfs_err_ok
  */
 rucfs_errcode_t rucfs_load(uint8_t* data, rucfs_ctx_t* ctx);
+
+/**
+ * @brief path to a inode by a string
+ *
+ * @param ctx rcufs context handle
+ * @param file the path
+ * @param inode the target inode
+ * @return if success return rucfs_err_ok, not found return rucfs_err_notfound
+*/
+rucfs_errcode_t rucfs_path_to(rucfs_ctx_t* ctx, const char* file, rucfs_inode_t** inode);
 
 /**
  * @brief open file
@@ -135,5 +158,15 @@ bool rucfs_exist(rucfs_ctx_t* ctx, const char* file, rucfs_errcode_t* err);
  * @param err rucfs_errcode_t
 */
 rucfs_errcode_t rucfs_enumerate_path(rucfs_ctx_t* ctx, const char* path, rucfs_path_enum_t* list, size_t* size);
+
+/**
+ * @brief normalize the path string
+ *
+ * @param dst destination string
+ * @param src source string
+ * @param endslash append the end slash
+ * @return return the length of normalized string
+*/
+size_t rucfs_normalize_path(char* dst, const char* src, bool endslash);
 
 #endif /* _RUCFS_H */
