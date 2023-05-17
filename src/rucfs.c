@@ -63,25 +63,27 @@ rucfs_errcode_t rucfs_path_to(rucfs_ctx_t* ctx, const char* file, rucfs_inode_t*
   char* stepname = (char *)file;
   char* stepend  = stepname + filename_len;
 
+  // if stepname is '/' indicates we're going to find '/' in the root,
+  // but we're already in the root, so we can directly return :p.
+  if (filename_len == 1 && (*stepname) == '/') {
+    *inode = current;
+    return rucfs_err_ok;
+  }
+
   while(true) {
 
     // directory name
-    const char* current_name = (char *)(ctx->strtab + current->name_offset);
+    const char* current_name = rucfs_inode_name(ctx, current);
     size_t length = strlen(current_name);
 
     // compare the name
     if(strncmp(stepname, current_name, length) == 0) {
       
-      // stepname contains current_name and more
-      char splitchar = *(stepname + length);
-      if(splitchar != '/' && splitchar != '\0') {
-        stepname += length;
-        goto next_inode;
-      }
+      // if current char is '/' so step into this directory
+      if((*stepname) == '/' || *(stepname + length) == '/') {
 
-      // step into sub-directory
-      else if(splitchar == '/') {
-        stepname += length + 1;
+        if ((*stepname) != '/') ++stepname;
+        stepname += length;
 
         // if a directory
         if(current->type == rucfs_inode_directory) {
@@ -89,7 +91,7 @@ rucfs_errcode_t rucfs_path_to(rucfs_ctx_t* ctx, const char* file, rucfs_inode_t*
           current = rucfs_open_directory(ctx, current);
         }
 
-        // if a symol link
+        // if a symbol link
         else if(current->type == rucfs_inode_symlink) {
           current = rucfs_open_symlink(ctx, current); {
             if(current->type != rucfs_inode_directory)
@@ -97,7 +99,7 @@ rucfs_errcode_t rucfs_path_to(rucfs_ctx_t* ctx, const char* file, rucfs_inode_t*
           }
           current_items = ((rucfs_inode_directory_t *)current)->item_count;
         }
-        
+
         // the regular file :P
         else if (current->type == rucfs_inode_file)
           return rucfs_err_notfound;
